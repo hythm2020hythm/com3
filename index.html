@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #score-counter {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px;
+            background-color: #333;
+            border-bottom-right-radius: 10px;
+            color: white;
+            z-index: 999;
+        }
+
+        #quiz-container {
+            max-width: 600px;
+            margin: auto;
+            padding: 60px 20px 20px; /* تم تعديل ال padding ليضمن عدم تغطية الصورة */
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            position: relative; /* تمت إضافة position: relative; للسماح لـ #score-counter بالتحكم فيه */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: white;
+            background-color: #2196F3;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0c0c0c;
+        }
+
+        #timer {
+            margin-bottom: 10px;
+        }
+
+        #result-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-text {
+            margin-bottom: 10px;
+        }
+
+        .correct {
+            background-color: green;
+            color: white;
+        }
+
+        .incorrect {
+            background-color: red;
+            color: white;
+        }
+
+        /* CSS for displaying images to fit the screen */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="score-counter">Score: <span id="score">0</span></div>
+
+    <div id="quiz-container">
+        <img id="question-image" src="" alt="Question Image">
+        <div id="choices"></div>
+        <button onclick="checkAnswer()">Submit Answer</button>
+        <p id="timer"></p>
+    </div>
+
+    <div id="result-container">
+        <h2>Quiz Result</h2>
+        <p class="result-text" id="result"></p>
+        <div id="correct-answers"></div>
+        <button id="retryBtn" style="display: none;" onclick="retryQuiz()">Retry Quiz</button>
+    </div>
+
+    <script>
+        var currentQuestion = 0;
+        var score = 0;
+        var timeLeft = 600; // تحديد عدد الثواني
+        var timerInterval;
+
+        var quizData = [
+
+      
+{
+
+"question": "القرص الصلب يتكون من ",
+"choices": ["نقاط مغناطيسية", "شرائح مغناطيسية", "شعاع احمر"],
+"correctAnswer": "شرائح مغناطيسية"
+}, {
+
+"question": "عند انشاء ملف اكسيل جديد يحتوى علي كام ورقه ",
+"choices": ["1", "3", "6"],
+"correctAnswer": "3"
+
+}, {
+
+
+
+"question": "ادراج فاصل بين الصفحات ",
+"choices": ["ctrl + enter", "F1", "ctrl + A"],
+"correctAnswer": "ctrl + enter"
+}, {
+
+"question": "للمساعدة في نظلم التشغيل",
+"choices": ["ctrl + enter", "F1", "ctrl + A"],
+"correctAnswer": "F1"
+
+}, {
+
+"question": "لتجديد نص",
+"choices": ["ctrl + enter", "F1", "ctrl + A"],
+"correctAnswer": "ctrl + A"
+
+}, {
+
+"question": "لعمل مسافة",
+"choices": ["enter", "F1", "ctrl + A"],
+"correctAnswer": "enter"
+
+}, {
+
+"question": "الميكرو لعمل واداء مهام",
+"choices": ["متكرر", "متنوعه", "مختلفة"],
+"correctAnswer": "متكرر"
+
+}, {
+
+"question": "يعمل انتقالات بين الشرائح",
+"choices": ["transition", "animation", "ــــ"],
+"correctAnswer": "transition"
+
+}, {
+
+"question": "يعمل انتقالات فى الشريحه نفسها",
+"choices": ["transition", "animation", "ــــ"],
+"correctAnswer": "animation"
+
+}, {
+
+"question": "مطور كمبيوتر ABC هو Atanasoff Berry Computer", 
+"choices": ["صح", "خطأ", "ــــ"],
+"correctAnswer": "صح"
+
+}, {
+
+"question": "كم هامش فى الكمبيوتر",
+"choices": ["1", "3", "4"],
+"correctAnswer": "4"
+
+}, {
+
+"question": "Alt + N لادراج جدول",
+"choices": ["صح", "خطأ", "ــــ"],
+"correctAnswer": "صح"
+
+}, {
+
+"question": "ctrl + f2 معاينة الصفحات",
+"choices": ["صح", "خطأ", "ــــ"],
+"correctAnswer": "صح"
+
+}, {
+
+"question": "فتح علامة تبويب جديده",
+"choices": ["ctrl + T", "F1", "ctrl + A"],
+"correctAnswer": "ctrl + T"
+
+}, {
+
+"question": "كم شريط تمرير فى الاكسيل",
+"choices": ["1", "2", "3"],
+"correctAnswer": "2"
+
+}, {
+
+"question": "كم شريط تمرير فى الورد",
+"choices": ["1", "2", "3"],
+"correctAnswer": "1"
+
+}, {
+
+"question": "تغيير اتجاه الصفحة من تخطيط الصفحة",
+"choices": ["صح", "خطأ", "ــــ"],
+"correctAnswer": "صح"
+
+}, {
+
+"question": "الجهاز الطرفي يتصل بالكمبيوتر عن طريق ",
+"choices": ["منفذ usb", "سلك البور", "ـــ"],
+"correctAnswer": "منفذ usb"
+
+}, {
+
+"question": "جهاز يتصل بالحاسب ليعطيه امكانيه الاتصال بالانترنت",
+"choices": ["مودم", "طابعة", "سماعة"],
+"correctAnswer": "مودم"
+
+}, {
+
+"question": "وميض على الشاشة ٌيسمى ضوء",
+"choices": ["صح", "خطأ", "ــــ"],
+"correctAnswer": "صح"
+
+
+}, 
+
+{
+
+"question": "Enternet exbloer ",
+"choices": ["متصفح", "نظام تشغيل", "غير ذلك"],
+"correctAnswer": "متصفح"
+
+}, {
+
+"question": "نوع ملف عارض الشرابح ",
+"choices": ["ppt", "exe", "xls"],
+"correctAnswer": "ppt"
+
+}, {
+
+"question": "الشبكة التى تربط اجهزة الحاسبات بين البلدان وحتى القارات ",
+"choices": ["LAN", "WAN", "TAN"],
+"correctAnswer": "WAN"
+
+}, {
+
+"question": "f7 تستخدم فى تصحيح",
+"choices": ["قواعد املائية", "لغوية", "جميع ما سبق"],
+"correctAnswer": "جميع ما سبق"
+
+}, {
+
+"question": "الانتقال الي فحة ذات رقم معين داخل مستند",
+"choices": ["f4", "f5", "f6"],
+"correctAnswer": "f5"
+
+}, {
+
+"question": "لانتاج شبكة كمبيوتر محليه فاننا نحتاج ",
+"choices": ["كابل", "كارت شاشه", "الاولى والثانية"],
+"correctAnswer": "الاولى والثانية"
+
+}, {
+
+"question": "URL",
+"choices": ["Homepage", "Browser", "Protocol"],
+"correctAnswer": "Protocol"
+
+}, {
+
+"question": "امتداد ملفات قوالب الاكسس",
+"choices": ["mdb", "XLS", "PPTX"],
+"correctAnswer": "mdb"
+}, {
+"question": "برنامج يعبر عن العمليات الحسابيه",
+"choices": ["EXCEL", "access", "powerpoint"],
+"correctAnswer": "EXCEL"
+}, {
+
+"question": "برنامج يستخدم لعمل العروض التقديمية ",
+"choices": ["EXCEL", "access", "powerpoint"],
+"correctAnswer": "powerpoint"
+},
+        
+ 
+        ];
+
+        // قم بترتيب الأسئلة بشكل عشوائي
+        shuffleArray(quizData);
+
+        function shuffleArray(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            return array;
+        }
+
+        function loadQuestion() {
+            var currentQuiz = quizData[currentQuestion];
+
+            var questionImageElement = document.getElementById('question-image');
+            var choicesElement = document.getElementById('choices');
+
+            if (currentQuiz.imageSrc) {
+                questionImageElement.src = currentQuiz.imageSrc; // تعيين مصدر الصورة
+                questionImageElement.style.display = 'block'; // عرض الصورة
+            } else {
+                questionImageElement.style.display = 'none'; // إخفاء الصورة إذا لم تكن متاحة
+            }
+
+            choicesElement.innerHTML = '';
+
+            // عرض السؤال كنص عادي إذا لم يكن هناك صورة
+            if (!currentQuiz.imageSrc) {
+                choicesElement.innerHTML += '<p>' + currentQuiz.question + '</p>';
+            }
+
+            for (var i = 0; i < currentQuiz.choices.length; i++) {
+                var choice = currentQuiz.choices[i];
+                choicesElement.innerHTML += '<label><input type="radio" name="choice" value="' + choice + '"> ' + choice + '</label>';
+            }
+
+            startTimer(); // بدء الموقت عند تحميل كل سؤال
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(function () {
+                document.getElementById('timer').innerHTML = 'Time Left: ' + timeLeft + 's';
+
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up!'); // عرض رسالة انتهاء الوقت
+                    showResult(); // عرض النتيجة النهائية عند انتهاء الوقت
+                } else {
+                    timeLeft--;
+                }
+            }, 1000);
+        }
+
+        function checkAnswer() {
+            var selectedOption = document.querySelector('input[name="choice"]:checked');
+            if (!selectedOption) {
+                alert('Please select an answer.');
+                return;
+            }
+
+            var userAnswer = selectedOption.value;
+            var currentQuiz = quizData[currentQuestion];
+
+            var choicesLabels = document.querySelectorAll('label');
+
+            for (var i = 0; i < choicesLabels.length; i++) {
+                if (currentQuiz.correctAnswer === currentQuiz.choices[i]) {
+                    choicesLabels[i].classList.add('correct');
+                } else {
+                    choicesLabels[i].classList.add('incorrect');
+                }
+            }
+
+            if (userAnswer === currentQuiz.correctAnswer) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+
+            clearInterval(timerInterval); // قبل التحقق من الإجابة، قم بإيقاف الموقت
+
+            currentQuestion++;
+
+            if (currentQuestion < quizData.length) {
+                setTimeout(function () {
+                    loadQuestion();
+                    resetColors();
+                }, 3000);
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            var resultElement = document.getElementById('result');
+            var correctAnswersElement = document.getElementById('correct-answers');
+
+            resultElement.innerHTML = 'Your Score: ' + score + ' out of ' + quizData.length;
+
+            correctAnswersElement.innerHTML = '<h3>Correct Answers:</h3>';
+            for (var i = 0; i < quizData.length; i++) {
+                var q = quizData[i];
+                var imgSrc = q.imageSrc;
+                var imgElement = '<img src="' + imgSrc + '" alt="Question Image">';
+                correctAnswersElement.innerHTML += imgElement + '<strong>Q: ' + q.question + '</strong><br>A: ' + q.correctAnswer + '<br>';
+            }
+
+            document.getElementById('result-container').style.display = 'block';
+            document.getElementById('retryBtn').style.display = 'block';
+        }
+
+        function resetColors() {
+            var choicesLabels = document.querySelectorAll('label');
+            for (var i = 0; i < choicesLabels.length; i++) {
+                choicesLabels[i].classList.remove('correct', 'incorrect'); // إزالة الأنماط المضافة سابقًا
+            }
+        }
+
+        function retryQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            timeLeft = 600; // إعادة تعيين الوقت للقيمة الأصلية
+
+            // قم بترتيب الأسئلة بشكل عشوائي عند إعادة المحاولة
+            shuffleArray(quizData);
+
+            document.getElementById('score').textContent = score; // تحديث قيمة العداد إلى الصفر
+            loadQuestion();
+            resetColors();
+
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('retryBtn').style.display = 'none';
+        }
+
+        loadQuestion();
+    </script>
+
+</body>
+
+</html>
